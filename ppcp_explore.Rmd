@@ -11,12 +11,14 @@ After that then normalizing and running a pca and ordinating to see if any of th
 ```{r message=FALSE, warning=FALSE}
 library(dplyr)
 library(factoextra)
+library(ggplot2)
+library(ggpubr)
 
 raw_tab <- read.csv("ppcp_raw.csv")
 header <- c("Sample_ID","1,7-Dimethylxanthine",	"Acetaminophen","Ampicillin","Azithromycin","Caffeine","Carbamazepine",	"Cefotaxime",	"Ciprofloxacin",	"Clarithromycin",	"Clinafloxacin",	"Codeine",	"Cotinine",	"Dehydronifedipine",	"Digoxigenin",	"Digoxin",	"Diltiazem","Diphenhydramine"	,"Enrofloxacin"	,"Erythromycin",	"Flumequine",	"Fluoxetine",	"Lincomycin",	"Lomefloxicin",	"Miconazole",	"Norfloxacin", "Norgestimate",	"Ofloxacin",	"Ormetoprim",	"Oxacillin",	"Penicillin-G",	"Penicillin-V",	"Penillic_Acid","Phenazone","Roxithromycin","Sarafloxacin",	"Sucralose",	"Sulfachlorpyridazine",	"Sulfadiazine",	"Sulfamerazine",	"Sulfamethazine",	"Sulfamethiazole",	"Sulfamethoxazole",	"Sulfanilamide", "Sulfathiazole",	"Thiabendazole", "Trimethoprim")
 colnames(raw_tab) <- header
 raw_tab['Site'] <- c(rep("NPS",3),rep("SLT",6), rep("SPR",6))
-raw_tab['Local'] <- c(rep('UPST',6),rep('DWNS',3), rep('UPST',3),rep('DWNS',3))
+raw_tab['Local'] <- c(rep('NPRS',3),rep('USLT',3),rep('DSLT',3), rep('USPR',3),rep('DSPR',3))
 col_order <- c("Sample_ID","Site","Local", "1,7-Dimethylxanthine",	"Acetaminophen","Ampicillin","Azithromycin","Caffeine","Carbamazepine",	"Cefotaxime",	"Ciprofloxacin",	"Clarithromycin",	"Clinafloxacin",	"Codeine",	"Cotinine",	"Dehydronifedipine",	"Digoxigenin",	"Digoxin",	"Diltiazem","Diphenhydramine"	,"Enrofloxacin"	,"Erythromycin",	"Flumequine",	"Fluoxetine",	"Lincomycin",	"Lomefloxicin",	"Miconazole",	"Norfloxacin", "Norgestimate",	"Ofloxacin",	"Ormetoprim",	"Oxacillin",	"Penicillin-G",	"Penicillin-V",	"Penillic_Acid","Phenazone","Roxithromycin","Sarafloxacin",	"Sucralose",	"Sulfachlorpyridazine",	"Sulfadiazine",	"Sulfamerazine",	"Sulfamethazine",	"Sulfamethiazole",	"Sulfamethoxazole",	"Sulfanilamide", "Sulfathiazole",	"Thiabendazole", "Trimethoprim")
 raw_tab <- raw_tab[,col_order]
 rownames(raw_tab) <- c("NPS1","NPS2","NPS3","SLT1","SLT2","SLT3","SLT6","SLT7","SLT8","SPR1","SPR2","SPR3","SPR6","SPR7","SPR8")
@@ -35,11 +37,41 @@ res.pca <- prcomp(z_norm_no_na,center = F, scale. = F)
 
 fviz_eig(res.pca)
 
-fviz_pca_ind(res.pca, col.ind = "cos2",repel = T, gradient.cols=c("#00AFBB","#E7B800","#FC4E07"))
+pca_sample <- fviz_pca_ind(res.pca, col.ind = "cos2",repel = T, gradient.cols=c("#00AFBB","#E7B800","#FC4E07"))
 
-fviz_pca_var(res.pca,
+pca_variables <- fviz_pca_var(res.pca,
              col.var = "contrib",
              gradient.cols=c("#00AFBB","#E7B800","#FC4E07"),
              repel=T)
+
+multi <- ggarrange(pca_sample,pca_variables,ncol = 1)
+
+ggsave("pca_plot_samples.png",plot = pca_sample)
+ggsave("pca_plot_ppcps.png", plot=pca_variables)
+ggsave("pca_plot_multi.png", plot=multi,width=200, height=250, units = "mm")
  
+print(raw_tab)
+```
+
+Statistical Test
+```{r}
+library("dplyr")
+library("ggpubr")
+
+shapiro.test(raw_tab$Acetaminophen)
+
+```
+
+```{r}
+aggregated <- aggregate(raw_tab, by=list(raw_tab$Local), FUN=mean)
+mean_tab <- aggregated[,5:50]
+rownames(mean_tab) <- aggregated[,1]
+mean_tab <- t(mean_tab)
+col_order <- c("NPRS","USPR","DSPR","USLT","DSLT")
+mean_tab <- mean_tab[,col_order]
+write.csv(mean_tab,"mean_ppcp_values.csv")
+
+data.frame(t(raw_tab))
+raw_tab
+
 ```
