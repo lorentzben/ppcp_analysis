@@ -1,0 +1,8 @@
+---
+title: "PPCP analysis"
+output: html_notebook
+---
+
+The first step I am interested in is to perform basic ANVOA and then pairwise ANOVA test.
+After that then normalizing and running a pca and ordinating to see if any of the PCs correspond with PPCPs
+
